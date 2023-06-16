@@ -10,7 +10,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./.wp:/var/www/html
-      - ./src:/var/www/html/wp-content/plugins/WpPluginScaffold
+      - ./src:/var/www/html/wp-content/plugins/wp-plugin-scaffold
     ports:
       - "8090:80"
     restart: always
@@ -56,7 +56,7 @@ services:
     user: 33:33
     volumes:
       - ./wp:/var/www/html
-      - ./src:/var/www/html/wp-content/plugins/WpPluginScaffold
+      - ./src:/var/www/html/wp-content/plugins/wp-plugin-scaffold
     environment:
       WORDPRESS_DB_HOST: mysql
       WORDPRESS_DB_USER: wp_plugin_scaffold

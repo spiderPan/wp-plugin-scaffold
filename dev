@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 shopt -s expand_aliases
 alias docker-compose='docker compose'
-CONTAINER_DIR=/var/www/html/wp-content/plugins/WpPluginScaffold
+CONTAINER_DIR=/var/www/html/wp-content/plugins/wp-plugin-scaffold
 
 SCRIPT_RELATIVE_DIR=$(dirname "${BASH_SOURCE[0]}")
 cd $SCRIPT_RELATIVE_DIR
