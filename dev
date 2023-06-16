@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+shopt -s expand_aliases
+alias docker-compose='docker compose'
+CONTAINER_DIR=/var/www/html/wp-content/plugins/WpPluginScaffold
+
+SCRIPT_RELATIVE_DIR=$(dirname "${BASH_SOURCE[0]}")
+cd $SCRIPT_RELATIVE_DIR
+#export DOCKER_DEFAULT_PLATFORM=linux/amd64
+
+function start() {
+  docker-compose up
+}
+
+function init-plugins() {
+  docker-compose run --rm wp-cli plugin install cmb2 --activate-network
+}
+
+function stop() {
+  docker-compose down
+}
+
+function wipe() {
+  rm -rf "$SCRIPT_RELATIVE_DIR/wp/"
+  docker-compose down -v --remove-orphans
+}
+
+function test() {
+  docker-compose run --rm composer install
+  docker-compose exec -w $CONTAINER_DIR -T wordpress vendor/bin/codecept run acceptance
+  #TODO: enable other tests
+  #  docker-compose exec -w $CONTAINER_DIR -T wordpress vendor/bin/codecept run functional
+  #  docker-compose exec -w $CONTAINER_DIR -T wordpress vendor/bin/codecept run unit
+  #  docker-compose exec -w $CONTAINER_DIR -T wordpress vendor/bin/codecept run wpunit
+}
+
+function wp-cli() {
+  docker-compose run --rm wp-cli "$@"
+}
+
+function composer() {
+  docker-compose run --rm composer "$@"
+}
+
+function exec() {
+  docker-compose exec wordpress "$@"
+}
+
+function mysql_backup() {
+  docker-compose exec -T mysql /usr/bin/mysqldump -u root wp_plugin_scaffold >./data/backup.sql
+}
+
+function update() {
+  reset && git pull && start
+}
+
+function reset() {
+  wipe
+  docker-compose up --force-recreate --renew-anon-volumes --build --no-start
+}
+
+function import() {
+  if ! command -v jq &>/dev/null; then
+    echo "Data import requires the 'jq' JSON processor."
+    exit 1
+  fi
+
+  jq --stream -c 'fromstream(1|truncate_stream(inputs))' <"$1" | docker-compose exec -T wordpress php systems/data_transfer/data_import_manager.php
+}
+
+function launch() {
+  open "http://localhost:8008/$1"
+}
+
+function usage() {
+  name=$(basename $0)
+
+  echo "USAGE: $name COMMAND [ARGS...]"
+  echo ""
+  echo "Commands:"
+  echo "   start    Starts the VM"
+  echo "   stop     Stops the VM"
+  echo "   reset    Stops the VM, deletes all MySQL data, rebuilds and restarts the VM"
+  echo "   update   Similar to reset, but also pulls git"
+  echo "   test     Runs the specified test; runs all if none specified"
+  echo "   wp       Runs the parameters as a WP-CLI script"
+  echo "   composer       Runs the parameters as a PHP composer script"
+  echo "   mysql_backup    Backup the database as root"
+  echo "   usage    Prints this infromation"
+  echo "   *        Runs the parameters in the php container"
+  echo ""
+  echo "Note:"
+  echo "   Both 'test' and 'php' commands will translate paths from local to ππcontainer"
+  echo "   filesystems, so you can use tab completion via the 'web' symlink."
+}
+
+case $1 in
+"start") start ;;
+"stop") stop ;;
+"reset") reset ;;
+"update") update ;;
+"init-plugins") init-plugins ;;
+"test") test "${@:2}" ;;
+"wp") wp-cli "${@}" ;;
+"composer") composer "${@}" ;;
+"backup") mysql_backup ;;
+"usage") usage ;;
+*) exec "${@}" ;;
+esac

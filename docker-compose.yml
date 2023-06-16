@@ -1,0 +1,85 @@
+version: "3.9"
+
+services:
+  wordpress:
+    depends_on:
+      mysql:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./.wp:/var/www/html
+      - ./src:/var/www/html/wp-content/plugins/WpPluginScaffold
+    ports:
+      - "8090:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: wp_plugin_scaffold
+      WORDPRESS_DB_PASSWORD: xXVmkWud
+      WORDPRESS_DB_NAME: wp_plugin_scaffold
+      WORDPRESS_DEBUG: true
+      WORDPRESS_DEBUG_LOG: true
+      WP_ENVIRONMENT_TYPE: local
+  
+  mysql:
+    image: mariadb:latest
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./data:/docker-entrypoint-initdb.d
+    restart: always
+    environment:
+      MYSQL_DATABASE: wp_plugin_scaffold
+      MYSQL_USER: wp_plugin_scaffold
+      MYSQL_PASSWORD: xXVmkWud
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: true
+    healthcheck:
+      test: [ "CMD", "/usr/local/bin/healthcheck.sh", "--su=root", "--connect", "--innodb_initialized" ]
+
+  phpmyadmin:
+    depends_on:
+      - mysql
+    image: phpmyadmin/phpmyadmin:latest
+    ports:
+      - 8123:80
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD:
+
+  wp-cli:
+    depends_on:
+      mysql:
+        condition: service_healthy
+    image: wordpress:cli
+    user: 33:33
+    volumes:
+      - ./wp:/var/www/html
+      - ./src:/var/www/html/wp-content/plugins/WpPluginScaffold
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: wp_plugin_scaffold
+      WORDPRESS_DB_PASSWORD: xXVmkWud
+      WORDPRESS_DB_NAME: wp_plugin_scaffold
+      WORDPRESS_DEBUG: 1
+      WP_ENVIRONMENT_TYPE: local
+    profiles:
+      - dev
+
+  mailhog:
+    platform: linux/amd64
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025" # smtp server
+      - "8025:8025" # web ui
+
+  composer:
+    image: composer:latest
+    volumes:
+      - ./src:/app
+    working_dir: /app
+    profiles:
+      - dev
+volumes:
+  db_data:
