@@ -1,5 +1,5 @@
 <?php
-// Plugin Name: Halligan
+// Plugin Name: wp-plugin-scaffold
 // Plugin URI: https://thepan.co
 // Description: A plugin to add custom functionality to the Halligan theme.
 // Version: 1.0.0
