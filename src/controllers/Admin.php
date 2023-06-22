@@ -1,6 +1,6 @@
 <?php
 
-namespace WpPluginScaffold\controllers;
+namespace WpPluginScaffold\Controllers;
 
 
 require_once dirname( __FILE__ ) . '/../lib/class-tgm-plugin-activation.php';

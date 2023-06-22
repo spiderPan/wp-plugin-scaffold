@@ -1,6 +1,6 @@
 <?php
 
-namespace WpPluginScaffold\controllers;
+namespace WpPluginScaffold\Controllers;
 
 class CMB2 {
 	function hook(): void {

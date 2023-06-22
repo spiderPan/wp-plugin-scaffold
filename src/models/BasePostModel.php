@@ -1,6 +1,6 @@
 <?php
 
-namespace WpPluginScaffold\models;
+namespace WpPluginScaffold\Models;
 
 class BasePostModel {
 	protected string|int $id;
